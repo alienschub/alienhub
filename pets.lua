@@ -24,6 +24,18 @@ Task.define("normal", "AutoHarvest", 46)
 local PetListModule = require(game:GetService("ReplicatedStorage"):WaitForChild("Data").PetRegistry.PetList)
 local DataService = require(game:GetService("ReplicatedStorage").Modules.DataService)
 
+-- Remotes
+local petEggStockRemote = game:GetService("ReplicatedStorage"):WaitForChild("GameEvents").BuyPetEgg
+local buyGearStockRemote = game:GetService("ReplicatedStorage"):WaitForChild("GameEvents").BuyGearStock
+local buySeedStockRemote =  game:GetService("ReplicatedStorage"):WaitForChild("GameEvents").BuySeedStock
+local buyEventShopStockRemote =  game:GetService("ReplicatedStorage"):WaitForChild("GameEvents").BuyEventShopStock
+local petEggServiceRemote = game:GetService("ReplicatedStorage"):WaitForChild("GameEvents").PetEggService
+local petBoostServiceRemote = game:GetService("ReplicatedStorage"):WaitForChild("GameEvents").PetBoostService
+local sellPetRemote = game:GetService("ReplicatedStorage"):WaitForChild("GameEvents").SellPet_RE
+local petGiftingServiceRemote = game:GetService("ReplicatedStorage"):WaitForChild("GameEvents").PetGiftingService
+local petMutationMachineServiceRemote = game:GetService("ReplicatedStorage"):WaitForChild("GameEvents").PetMutationMachineService_RE
+local zenQuestRemoteEventRemote = game:GetService("ReplicatedStorage"):WaitForChild("GameEvents").ZenQuestRemoteEvent
+
 -- Global Shared Variables
 local Players = game:GetService("Players")
 local Player = Players.LocalPlayer
@@ -197,11 +209,10 @@ task.spawn(function()
 
             -- Auto Buy Eggs
             if data.petEggStock and data.petEggStock.Stocks then
-                local remote = game:GetService("ReplicatedStorage"):WaitForChild("GameEvents"):WaitForChild("BuyPetEgg")
                 for index, info in ipairs(data.petEggStock.Stocks) do
                     if info and info.Stock > 0 then
                         for i = 1, info.Stock do
-                            remote:FireServer(index)
+                            petEggStockRemote:FireServer(index)
                             task.wait()
                         end
                     end
@@ -210,12 +221,11 @@ task.spawn(function()
 
             -- Auto Buy Tools
             if data.gearStock and data.gearStock.Stocks then
-                local remote = game:GetService("ReplicatedStorage"):WaitForChild("GameEvents"):WaitForChild("BuyGearStock")
                 for _, itemName in ipairs({ "Levelup Lollipop", "Medium Toy", "Medium Treat", "Basic Sprinkler", "Advanced Sprinkler", "Godly Sprinkler", "Master Sprinkler" }) do
                     local info = data.gearStock.Stocks[itemName]
                     if info and info.Stock > 0 then
                         for i = 1, info.Stock do
-                            remote:FireServer(itemName)
+                            buyGearStockRemote:FireServer(itemName)
                             task.wait()
                         end
                     end
@@ -224,11 +234,10 @@ task.spawn(function()
 
             -- Auto Buy Seeds
             if data.seedStock and data.seedStock.Stocks then
-                local remote = game:GetService("ReplicatedStorage"):WaitForChild("GameEvents"):FindFirstChild("BuySeedStock")
                 for itemName, info in pairs(data.seedStock.Stocks) do
                     if info and info.Stock > 0 then
                         for i = 1, info.Stock do
-                            remote:FireServer(itemName)
+                            buySeedStockRemote:FireServer(itemName)
                             task.wait()
                         end
                     end
@@ -237,12 +246,11 @@ task.spawn(function()
 
              -- Auto Buy Event
             if data.EventShopStock and data.EventShopStock.Stocks then
-                local remote = game:GetService("ReplicatedStorage"):WaitForChild("GameEvents"):WaitForChild("BuyEventShopStock")
                 for itemName, info in pairs(data.EventShopStock.Stocks) do
                     if table.find({"Zen Egg"}, itemName) then
                         if info and info.Stock > 0 then
                             for i = 1, info.Stock do
-                                remote:FireServer(itemName)
+                                buyEventShopStockRemote:FireServer(itemName)
                                 task.wait()
                             end
                         end
@@ -360,12 +368,11 @@ task.spawn(function()
             for _ in pairs(settings["Game"]["Player"]["Data"].pets) do petCount = petCount + 1 end
             if petCount >= settings["Game"]["Player"]["Data"].maxPets then return end
 
-            local remote = game:GetService("ReplicatedStorage"):WaitForChild("GameEvents"):WaitForChild("PetEggService")
             for _, egg in ipairs(farm:WaitForChild("Important").Objects_Physical:GetChildren()) do
                 if egg.Name == "PetEgg" then
                     local time = egg:GetAttribute("TimeToHatch")
                     if time == 0 then
-                        remote:FireServer("HatchPet", egg)
+                        petEggServiceRemote:FireServer("HatchPet", egg)
                         Task.normal("AutoHatch", function()
                             task.wait(0.5)
                         end, {})
@@ -406,7 +413,6 @@ task.spawn(function()
 
             if placed < maxEggs then
                 Task.normal("AutoPlace", function()
-                    local remote = game.ReplicatedStorage:WaitForChild("GameEvents"):WaitForChild("PetEggService")
                     local eggsInBackpack = settings["Game"]["Player"]["Backpack"].Eggs
 
                     for _, eggName in ipairs(config["Place Eggs"]["Order By"]) do
@@ -430,7 +436,7 @@ task.spawn(function()
                                         if not target then return end
 
                                         -- Tempatkan egg
-                                        remote:FireServer("CreateEgg", target.Position)
+                                        petEggServiceRemote:FireServer("CreateEgg", target.Position)
                                         target.Used = true
                                         placed = placed + 1
                                         task.wait(1)
@@ -532,7 +538,6 @@ task.spawn(function()
                     if isNeed.passive then table.insert(nBoost.passive, uuid) end
                 end
 
-                local remote = game:GetService("ReplicatedStorage"):WaitForChild("GameEvents"):WaitForChild("PetBoostService")
                 if (#nBoost.xp > 0 and #booster.xp > 0) or (#nBoost.passive > 0 and #booster.passive > 0) then
                     local xp = booster.xp[1] or nil
                     local passive = booster.passive[1] or nil
@@ -541,7 +546,7 @@ task.spawn(function()
                             Hum:EquipTool(xp.tool)
                             task.wait(1)
                             for _, pet in ipairs(nBoost.xp) do
-                                remote:FireServer("ApplyBoost", pet)
+                                petBoostServiceRemote:FireServer("ApplyBoost", pet)
                                 xp.amount = xp.amount - 1
                                 task.wait(0.1)
                                 if xp.amount <= 0 then break end
@@ -552,7 +557,7 @@ task.spawn(function()
                             Hum:EquipTool(passive.tool)
                             task.wait(1)
                             for _, pet in ipairs(nBoost.passive) do
-                                remote:FireServer("ApplyBoost", pet)
+                                petBoostServiceRemote:FireServer("ApplyBoost", pet)
                                 passive.amount = passive.amount - 1
                                 task.wait(0.1)
                                 if passive.amount <= 0 then break end
@@ -575,9 +580,7 @@ task.spawn(function()
             local farm = settings["Game"]["Farm"]["Self"]
             if not farm then return end
 
-            local remote = game:GetService("ReplicatedStorage"):WaitForChild("GameEvents"):WaitForChild("SellPet_RE")
             local pets = settings.Game.Player.Backpack.Pets
-
             Task.normal("AutoSell", function()
                 for i = #pets, 1, -1 do
                     local pet = pets[i]
@@ -586,7 +589,7 @@ task.spawn(function()
                         Hum:EquipTool(pet.tool)
                         task.wait(1)
 
-                        remote:FireServer(workspace[Player.Name][pet.tool.Name])
+                        sellPetRemote:FireServer(workspace[Player.Name][pet.tool.Name])
                         task.wait(2)
                     end
                 end
@@ -606,7 +609,6 @@ game:GetService("TextChatService").OnIncomingMessage = function(msg)
         local sender = game.Players:GetNameFromUserIdAsync(msg.TextSource.UserId)
         if sender == Player.Name then return end
         
-        local remote = game.ReplicatedStorage.GameEvents.PetGiftingService
         local pets = {}
         for _, pet in ipairs(settings.Game.Player.Backpack.Pets) do
             if pet.level >= level and not isProtectedPet(pet, true, true) then
@@ -627,7 +629,7 @@ game:GetService("TextChatService").OnIncomingMessage = function(msg)
             for i = 1, amount do
                 Hum:EquipTool(pets[i].tool)
                 task.wait(1)
-                remote:FireServer("GivePet", game.Players[sender])
+                petGiftingServiceRemote:FireServer("GivePet", game.Players[sender])
                 task.wait(1)
             end
         end, {})
@@ -684,9 +686,8 @@ task.spawn(function()
             if not petMutationMachine then return end
 
             if not petMutationMachine.IsRunning then
-                local remote = game:GetService("ReplicatedStorage"):WaitForChild("GameEvents"):WaitForChild("PetMutationMachineService_RE")
                 if petMutationMachine.PetReady then
-                    remote:FireServer("ClaimMutatedPet")
+                    petMutationMachineServiceRemote:FireServer("ClaimMutatedPet")
                     task.wait(1)
                 end
 
@@ -721,9 +722,9 @@ task.spawn(function()
                     Hum:EquipTool(target.tool)
                     task.wait(0.5)
 
-                    remote:FireServer("SubmitHeldPet")
+                    petMutationMachineServiceRemote:FireServer("SubmitHeldPet")
                     task.wait(1)
-                    remote:FireServer("StartMachine")
+                    petMutationMachineServiceRemote:FireServer("StartMachine")
                     task.wait(1)
                 end, {})
             end
@@ -738,7 +739,7 @@ end)
 task.spawn(function()
     while task.wait(5) do
         local success, err = pcall(function()
-            game:GetService("ReplicatedStorage"):WaitForChild("GameEvents"):WaitForChild("ZenQuestRemoteEvent"):FireServer("SubmitAllPlants")
+            zenQuestRemoteEventRemote:FireServer("SubmitAllPlants")
             
             local farm = settings["Game"]["Farm"]["Self"]
             local fruits = {}
