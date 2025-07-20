@@ -564,7 +564,9 @@ task.spawn(function()
                 for i = #pets, 1, -1 do
                     local pet = pets[i]
                     warn("AutoSell PET LEVEL:", pet.level, "CONFIG LEVEL:", config["Sell Pets"] and config["Sell Pets"].Level)
-                    if not isProtectedPet(pet, true, true) and pet.level < config["Sell Pets"].Level then
+                    local isProtected = isProtectedPet(pet, true, true)
+                    print("isProtec ", isProtected)
+                    if not isProtected and pet.level < config["Sell Pets"].Level then
                         Hum:EquipTool(pet.tool)
                         print("equip")
                         task.wait(2)
