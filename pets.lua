@@ -662,60 +662,60 @@ end
 -- end)
 
 -- -- Auto Pet Mutation
--- task.spawn(function()
---     while task.wait(2) do
---         local success, err = pcall(function()
---             local petMutationMachine = settings["Game"]["Player"]["Data"].petMutationMachine
---             if not petMutationMachine then return end
+task.spawn(function()
+    while task.wait(2) do
+        local success, err = pcall(function()
+            local petMutationMachine = settings["Game"]["Player"]["Data"].petMutationMachine
+            if not petMutationMachine then return end
 
---             if not petMutationMachine.IsRunning then
---                 local remote = game:GetService("ReplicatedStorage"):WaitForChild("GameEvents"):WaitForChild("PetMutationMachineService_RE")
---                 if petMutationMachine.PetReady then
---                     remote:FireServer("ClaimMutatedPet")
---                     task.wait(1)
---                 end
+            if not petMutationMachine.IsRunning then
+                local remote = game:GetService("ReplicatedStorage"):WaitForChild("GameEvents"):WaitForChild("PetMutationMachineService_RE")
+                if petMutationMachine.PetReady then
+                    remote:FireServer("ClaimMutatedPet")
+                    task.wait(1)
+                end
 
---                 local pets = settings.Game.Player.Backpack.Pets
---                 local target = nil
---                 local level = (config["Sell Pets"].Level and config["Sell Pets"].Level > 50) and config["Sell Pets"].Level or 60
---                 for i = #pets, 1, -1 do
---                     local pet = pets[i]
---                     if pet.level >= 50 and pet.level < level and not isProtectedPet(pet, false, true) then
---                         target = pet
---                         break
---                     end
---                 end
+                local pets = settings.Game.Player.Backpack.Pets
+                local target = nil
+                local level = (config["Sell Pets"].Level and config["Sell Pets"].Level > 50) and config["Sell Pets"].Level or 60
+                for i = #pets, 1, -1 do
+                    local pet = pets[i]
+                    if pet.level >= 50 and pet.level < level and not isProtectedPet(pet, false, true) then
+                        target = pet
+                        break
+                    end
+                end
 
---                 if not target then return end
---                 Task.priority("MutationPet", function()
---                     -- sell 1 pet if full inventory
---                     local petCount = 0
---                     for _ in pairs(settings["Game"]["Player"]["Data"].pets) do petCount = petCount + 1 end
---                     if petCount >= settings["Game"]["Player"]["Data"].maxPets then
---                         for i = #pets, 1, -1 do
---                             local pet = pets[i]
---                             if not isProtectedPet(pet, true, true) then
---                                 Hum:EquipTool(pet.tool)
---                                 task.wait(0.5)
+                if not target then return end
+                Task.priority("MutationPet", function()
+                    -- sell 1 pet if full inventory
+                    local petCount = 0
+                    for _ in pairs(settings["Game"]["Player"]["Data"].pets) do petCount = petCount + 1 end
+                    if petCount >= settings["Game"]["Player"]["Data"].maxPets then
+                        for i = #pets, 1, -1 do
+                            local pet = pets[i]
+                            if not isProtectedPet(pet, true, true) then
+                                Hum:EquipTool(pet.tool)
+                                task.wait(0.5)
 
---                                 game:GetService("ReplicatedStorage"):WaitForChild("GameEvents"):WaitForChild("SellPet_RE"):FireServer(workspace[Player.Name][pet.tool.Name])
---                                 task.wait(1.5)
---                                 break
---                             end
---                         end
---                     end
---                     Hum:EquipTool(target.tool)
---                     task.wait(0.5)
+                                game:GetService("ReplicatedStorage"):WaitForChild("GameEvents"):WaitForChild("SellPet_RE"):FireServer(workspace[Player.Name][pet.tool.Name])
+                                task.wait(1.5)
+                                break
+                            end
+                        end
+                    end
+                    Hum:EquipTool(target.tool)
+                    task.wait(0.5)
 
---                     remote:FireServer("SubmitHeldPet")
---                     task.wait(1)
---                     remote:FireServer("StartMachine")
---                     task.wait(1)
---                 end, {})
---             end
---         end)
---         if not success then
---             warn("[Task Error: Auto Pet Mutation]", err)
---         end
---     end
--- end)
+                    remote:FireServer("SubmitHeldPet")
+                    task.wait(1)
+                    remote:FireServer("StartMachine")
+                    task.wait(1)
+                end, {})
+            end
+        end)
+        if not success then
+            warn("[Task Error: Auto Pet Mutation]", err)
+        end
+    end
+end)
