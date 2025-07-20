@@ -433,121 +433,121 @@ task.spawn(function()
 end)
 
 -- Auto Pet
-task.spawn(function()
-    while task.wait(5) do
-        local success, err = pcall(function()
-            local equipped = settings["Game"]["Player"]["Data"].equipedPets
-            local maxEquipped = settings["Game"]["Player"]["Data"].maxEquipedPets
-            local placed = #equipped
-            local inventory = settings["Game"]["Player"]["Data"].pets
-            local hungries = {}
-            local active = {}
+-- task.spawn(function()
+--     while task.wait(5) do
+--         local success, err = pcall(function()
+--             local equipped = settings["Game"]["Player"]["Data"].equipedPets
+--             local maxEquipped = settings["Game"]["Player"]["Data"].maxEquipedPets
+--             local placed = #equipped
+--             local inventory = settings["Game"]["Player"]["Data"].pets
+--             local hungries = {}
+--             local active = {}
 
-            for uuid, pet in pairs(inventory) do
-                local hungry = isHungry(pet.PetData.Hunger, pet.PetType)
-                if hungry then table.insert(hungries, uuid) end
+--             for uuid, pet in pairs(inventory) do
+--                 local hungry = isHungry(pet.PetData.Hunger, pet.PetType)
+--                 if hungry then table.insert(hungries, uuid) end
 
-                if table.find(equipped, uuid) then
-                    if pet.PetType ~= "Ostrich" then
-                        game:GetService("ReplicatedStorage").GameEvents.PetsService:FireServer("UnequipPet", uuid)
-                        placed = placed - 1
-                        task.wait(0.2)
-                    else
-                        active[uuid] = pet
-                    end
-                end
+--                 if table.find(equipped, uuid) then
+--                     if pet.PetType ~= "Ostrich" then
+--                         game:GetService("ReplicatedStorage").GameEvents.PetsService:FireServer("UnequipPet", uuid)
+--                         placed = placed - 1
+--                         task.wait(0.2)
+--                     else
+--                         active[uuid] = pet
+--                     end
+--                 end
 
-                if placed < maxEquipped and pet.PetType == "Ostrich" then
-                    active[uuid] = pet
+--                 if placed < maxEquipped and pet.PetType == "Ostrich" then
+--                     active[uuid] = pet
                     
-                    game:GetService("ReplicatedStorage").GameEvents.PetsService:FireServer("EquipPet", uuid)
-                    placed = placed + 1
-                    task.wait(0.2)
-                end
-            end
+--                     game:GetService("ReplicatedStorage").GameEvents.PetsService:FireServer("EquipPet", uuid)
+--                     placed = placed + 1
+--                     task.wait(0.2)
+--                 end
+--             end
 
-             if #hungries > 0 then
-                local fruits = settings["Game"]["Player"]["Backpack"].Fruits
-                for i = #fruits, 1, -1 do
-                    if fruits[i].favorite then
-                        table.remove(fruits, i)
-                    end
-                end
-                if #fruits == 0 then return end
+--              if #hungries > 0 then
+--                 local fruits = settings["Game"]["Player"]["Backpack"].Fruits
+--                 for i = #fruits, 1, -1 do
+--                     if fruits[i].favorite then
+--                         table.remove(fruits, i)
+--                     end
+--                 end
+--                 if #fruits == 0 then return end
 
-                Task.normal("AutoFeed", function()
-                    local fruits = settings["Game"]["Player"]["Backpack"].Fruits
+--                 Task.normal("AutoFeed", function()
+--                     local fruits = settings["Game"]["Player"]["Backpack"].Fruits
 
-                    for _, pet in ipairs(hungries) do
-                        for i = #fruits, 1, -1 do
-                            if fruits[i].favorite == false then
-                                Hum:EquipTool(fruits[i].tool)
-                                task.wait(0.5)
+--                     for _, pet in ipairs(hungries) do
+--                         for i = #fruits, 1, -1 do
+--                             if fruits[i].favorite == false then
+--                                 Hum:EquipTool(fruits[i].tool)
+--                                 task.wait(0.5)
 
-                                game:GetService("ReplicatedStorage").GameEvents.ActivePetService:FireServer("Feed", pet)
-                                task.wait(0.3)
+--                                 game:GetService("ReplicatedStorage").GameEvents.ActivePetService:FireServer("Feed", pet)
+--                                 task.wait(0.3)
 
-                                table.remove(fruits, i)
+--                                 table.remove(fruits, i)
 
-                                local hungry = isHungry(settings["Game"]["Player"]["Data"].pets[pet]["PetData"].Hunger, settings["Game"]["Player"]["Data"].pets[pet]["PetType"])
-                                if not hungry then break end
-                            end
-                        end
-                    end
+--                                 local hungry = isHungry(settings["Game"]["Player"]["Data"].pets[pet]["PetData"].Hunger, settings["Game"]["Player"]["Data"].pets[pet]["PetType"])
+--                                 if not hungry then break end
+--                             end
+--                         end
+--                     end
 
-                end, {})
-            end
+--                 end, {})
+--             end
 
-            if next(active) then
-                local booster = settings.Game.Player.Backpack.Booster
-                local nBoost = { xp = {}, passive = {} }
+--             if next(active) then
+--                 local booster = settings.Game.Player.Backpack.Booster
+--                 local nBoost = { xp = {}, passive = {} }
 
-                for uuid, pet in pairs(active) do
-                    local isNeed = { xp = true, passive = true }
-                    for _, boost in ipairs(pet.PetData.Boosts) do
-                        if boost.BoostType == "PET_XP_BOOST" then isNeed.xp = false end
-                        if boost.BoostType == "PASSIVE_BOOST" then isNeed.passive = false end
-                    end
+--                 for uuid, pet in pairs(active) do
+--                     local isNeed = { xp = true, passive = true }
+--                     for _, boost in ipairs(pet.PetData.Boosts) do
+--                         if boost.BoostType == "PET_XP_BOOST" then isNeed.xp = false end
+--                         if boost.BoostType == "PASSIVE_BOOST" then isNeed.passive = false end
+--                     end
 
-                    if isNeed.xp then table.insert(nBoost.xp, uuid) end
-                    if isNeed.passive then table.insert(nBoost.passive, uuid) end
-                end
+--                     if isNeed.xp then table.insert(nBoost.xp, uuid) end
+--                     if isNeed.passive then table.insert(nBoost.passive, uuid) end
+--                 end
 
-                local remote = game:GetService("ReplicatedStorage"):WaitForChild("GameEvents"):WaitForChild("PetBoostService")
-                if (#nBoost.xp > 0 and #booster.xp > 0) or (#nBoost.passive > 0 and #booster.passive > 0) then
-                    local xp = booster.xp[1] or nil
-                    local passive = booster.passive[1] or nil
-                    Task.normal("ApplyBooster", function()
-                        if xp then
-                            Hum:EquipTool(xp.tool)
-                            task.wait(1)
-                            for _, pet in ipairs(nBoost.xp) do
-                                remote:FireServer("ApplyBoost", pet)
-                                xp.amount = xp.amount - 1
-                                task.wait(0.1)
-                                if xp.amount <= 0 then break end
-                            end
-                        end
+--                 local remote = game:GetService("ReplicatedStorage"):WaitForChild("GameEvents"):WaitForChild("PetBoostService")
+--                 if (#nBoost.xp > 0 and #booster.xp > 0) or (#nBoost.passive > 0 and #booster.passive > 0) then
+--                     local xp = booster.xp[1] or nil
+--                     local passive = booster.passive[1] or nil
+--                     Task.normal("ApplyBooster", function()
+--                         if xp then
+--                             Hum:EquipTool(xp.tool)
+--                             task.wait(1)
+--                             for _, pet in ipairs(nBoost.xp) do
+--                                 remote:FireServer("ApplyBoost", pet)
+--                                 xp.amount = xp.amount - 1
+--                                 task.wait(0.1)
+--                                 if xp.amount <= 0 then break end
+--                             end
+--                         end
 
-                        if passive then
-                            Hum:EquipTool(passive.tool)
-                            task.wait(1)
-                            for _, pet in ipairs(nBoost.passive) do
-                                remote:FireServer("ApplyBoost", pet)
-                                passive.amount = passive.amount - 1
-                                task.wait(0.1)
-                                if passive.amount <= 0 then break end
-                            end
-                        end
-                    end, {})
-                end
-            end
-        end)
-        if not success then
-            warn("[Task Error: Auto Pet]", err)
-        end
-    end
-end)
+--                         if passive then
+--                             Hum:EquipTool(passive.tool)
+--                             task.wait(1)
+--                             for _, pet in ipairs(nBoost.passive) do
+--                                 remote:FireServer("ApplyBoost", pet)
+--                                 passive.amount = passive.amount - 1
+--                                 task.wait(0.1)
+--                                 if passive.amount <= 0 then break end
+--                             end
+--                         end
+--                     end, {})
+--                 end
+--             end
+--         end)
+--         if not success then
+--             warn("[Task Error: Auto Pet]", err)
+--         end
+--     end
+-- end)
 
 -- Auto Sell Pet
 task.spawn(function()
