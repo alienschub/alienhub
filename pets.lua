@@ -18,6 +18,7 @@ Task.define("normal", "AutoSell", 50)
 Task.define("normal", "AutoFeed", 49)
 Task.define("normal", "ApplyBooster", 48)
 Task.define("normal", "AutoHatch", 47)
+Task.define("normal", "AutoHarvest", 46)
 
 -- Modules
 local PetListModule = require(game:GetService("ReplicatedStorage"):WaitForChild("Data").PetRegistry.PetList)
@@ -56,6 +57,7 @@ local settings = {
                 petEggStock = nil,
                 gearStock = nil,
                 seedStock = nil,
+                eventShopStock = nil,
             }
         }
     }
@@ -232,6 +234,21 @@ task.spawn(function()
                 end
             end
 
+             -- Auto Buy Event
+            if data.EventShopStock and data.EventShopStock.Stocks then
+                local remote = game:GetService("ReplicatedStorage"):WaitForChild("GameEvents"):WaitForChild("BuyEventShopStock")
+                for itemName, info in pairs(data.EventShopStock.Stocks) do
+                    if table.find({"Zen Egg"}, itemName) then
+                        if info and info.Stock > 0 then
+                            for i = 1, info.Stock do
+                                remote:FireServer(itemName)
+                                task.wait()
+                            end
+                        end
+                    end
+                end
+            end
+
         end)
         if not success then
             warn("[Task Error: Auto Buy Stock]", err)
@@ -258,6 +275,7 @@ task.spawn(function()
                 settings["Game"]["Player"]["Data"].petEggStock = data.PetEggStock
                 settings["Game"]["Player"]["Data"].gearStock = data.GearStock
                 settings["Game"]["Player"]["Data"].seedStock = data.SeedStock
+                settings["Game"]["Player"]["Data"].eventShopStock = data.EventShopStock
             end)
 
             if not success then
@@ -673,10 +691,9 @@ task.spawn(function()
 
                 local pets = settings.Game.Player.Backpack.Pets
                 local target = nil
-                local level = (config["Sell Pets"].Level and config["Sell Pets"].Level > 50) and config["Sell Pets"].Level or 60
                 for i = #pets, 1, -1 do
                     local pet = pets[i]
-                    if pet.level >= 50 and pet.level < level and not isProtectedPet(pet, false, true) then
+                    if pet.level >= 50 and pet.level < 75 and not isProtectedPet(pet, false, true) then
                         target = pet
                         break
                     end
@@ -690,7 +707,7 @@ task.spawn(function()
                     if petCount >= settings["Game"]["Player"]["Data"].maxPets then
                         for i = #pets, 1, -1 do
                             local pet = pets[i]
-                            if not isProtectedPet(pet, true, true) then
+                            if not isProtectedPet(pet, true, true) and pet.level < 75 then
                                 Hum:EquipTool(pet.tool)
                                 task.wait(0.5)
 
@@ -712,6 +729,42 @@ task.spawn(function()
         end)
         if not success then
             warn("[Task Error: Auto Pet Mutation]", err)
+        end
+    end
+end)
+
+-- Auto Tranquil
+task.spawn(function()
+    while task.wait(5) do
+        local success, err = pcall(function()
+            game:GetService("ReplicatedStorage"):WaitForChild("GameEvents"):WaitForChild("ZenQuestRemoteEvent"):FireServer("SubmitAllPlants")
+            
+            local farm = settings["Game"]["Farm"]["Self"]
+            local fruits = {}
+            for _, plant in ipairs(farm.Important.Plants_Physical:GetChildren()) do
+                for _, fruit in ipairs(plant.Fruits) do
+                    if fruit:GetAttribute("Tranquil") then
+                        local prompt = fruit:FindFirstChildWhichIsA("ProximityPrompt", true)
+                        if prompt and prompt.Enabled then
+                            fireproximityprompt(prompt)
+                            table.insert(fruits, {pos = fruit:GetPivot().Position, prompt = prompt})
+                        end
+                    end
+                end
+            end
+
+            if #fruits == 0 then return end
+            Task.normal("AutoHarvest", function()
+                for _, fruit in ipairs(fruits) do
+                    teleport(fruit.pos)
+                    task.wait(0.05)
+                    fireproximityprompt(fruit.prompt)
+                    task.wait()
+                end
+            end, {})
+        end)
+        if not success then
+            warn("[Task Error: Auto Tranquil]", err)
         end
     end
 end)
