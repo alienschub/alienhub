@@ -172,20 +172,20 @@ for i = -1, 1 do
 end
 
 -- Hook GetData
-task.spawn(function()
-    local DataService = require(game:GetService("ReplicatedStorage").Modules.DataService)
-    if typeof(DataService.GetData) == "function" then
-        local oldGetData = DataService.GetData
+-- task.spawn(function()
+--     local DataService = require(game:GetService("ReplicatedStorage").Modules.DataService)
+--     if typeof(DataService.GetData) == "function" then
+--         local oldGetData = DataService.GetData
 
-        DataService.GetData = function(self, ...)
-            local data = oldGetData(self, ...)
-            cachedPlayerData = data
-            return data
-        end
-    else
-        warn("DataService.GetData bukan fungsi atau belum tersedia.")
-    end
-end)
+--         DataService.GetData = function(self, ...)
+--             local data = oldGetData(self, ...)
+--             cachedPlayerData = data
+--             return data
+--         end
+--     else
+--         warn("DataService.GetData bukan fungsi atau belum tersedia.")
+--     end
+-- end)
 
 -- Auto Buy Stock
 task.spawn(function()
@@ -261,7 +261,7 @@ end)
 task.spawn(function()
     while task.wait(1) do
         local success, err = pcall(function()
-            local data = cachedPlayerData
+            local data = DataService:GetData()
             local success, err = pcall(function()
                 settings["Game"]["Player"]["Data"].maxEggs = data.PetsData.MutableStats.MaxEggsInFarm
                 settings["Game"]["Player"]["Data"].maxPets = data.PetsData.MutableStats.MaxPetsInInventory
