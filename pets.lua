@@ -742,7 +742,7 @@ task.spawn(function()
             local farm = settings["Game"]["Farm"]["Self"]
             local fruits = {}
             for _, plant in ipairs(farm.Important.Plants_Physical:GetChildren()) do
-                for _, fruit in ipairs(plant.Fruits) do
+                for _, fruit in ipairs(plant.Fruits:GetChildren()) do
                     if fruit:GetAttribute("Tranquil") then
                         local prompt = fruit:FindFirstChildWhichIsA("ProximityPrompt", true)
                         if prompt and prompt.Enabled then
