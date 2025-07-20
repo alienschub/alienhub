@@ -150,10 +150,12 @@ local function isProtectedPet(pet, isKeep, isMutation)
     local isKeptType = isKeep and (table.find(keepConfig.Type, name) ~= nil)
     local isKeptMutation = isMutation and mutation and mutaList and (table.find(mutaList, name) ~= nil)
     local isAscended = mutation == "n"
+    local isMega = mutation == "i"
+    local isTranquil = mutation == "o"
     local isOstrich = name == "Ostrich"
     -- local isUsedPet = table.find(settings["Game"]["Player"]["Data"].equipedPets, pet.uuid)
 
-    return isKeptType or isKeptMutation or isAscended or isOstrich
+    return isKeptType or isKeptMutation or isAscended or isOstrich or isMega or isTranquil
 end
 
 -- Init
@@ -246,8 +248,8 @@ task.spawn(function()
             end
 
              -- Auto Buy Event
-            if data.EventShopStock and data.EventShopStock.Stocks then
-                for itemName, info in pairs(data.EventShopStock.Stocks) do
+            if data.eventShopStock and data.eventShopStock.Stocks then
+                for itemName, info in pairs(data.eventShopStock.Stocks) do
                     if table.find({"Zen Egg"}, itemName) then
                         if info and info.Stock > 0 then
                             for i = 1, info.Stock do
