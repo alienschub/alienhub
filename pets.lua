@@ -616,46 +616,46 @@ game:GetService("TextChatService").OnIncomingMessage = function(msg)
 end
 
 -- Auto Dino Pet
-task.spawn(function()
-    while task.wait(2) do
-        local success, err = pcall(function()
-            local dinoMachine = settings["Game"]["Player"]["Data"].dinoMachine
-            if not dinoMachine then return end
+-- task.spawn(function()
+--     while task.wait(2) do
+--         local success, err = pcall(function()
+--             local dinoMachine = settings["Game"]["Player"]["Data"].dinoMachine
+--             if not dinoMachine then return end
 
-            if not dinoMachine.IsRunning then
-                local remote = game:GetService("ReplicatedStorage"):WaitForChild("GameEvents"):WaitForChild("DinoMachineService_RE")
-                if dinoMachine.RewardReady then
-                    remote:FireServer("ClaimReward")
-                    task.wait(0.5)
-                end
+--             if not dinoMachine.IsRunning then
+--                 local remote = game:GetService("ReplicatedStorage"):WaitForChild("GameEvents"):WaitForChild("DinoMachineService_RE")
+--                 if dinoMachine.RewardReady then
+--                     remote:FireServer("ClaimReward")
+--                     task.wait(0.5)
+--                 end
 
-                local pets = settings.Game.Player.Backpack.Pets
-                local target = nil
-                for i = #pets, 1, -1 do
-                    local pet = pets[i]
-                    if not isProtectedPet(pet, true, true)
-                        and pet.level < config["Sell Pets"].Level
-                        and not table.find({"Pterodactyl", "Raptor", "Triceratops", "Stegosaurus", "Brontosaurus", "T-Rex"}, pet.name) then
-                        target = pet
-                        break
-                    end
-                end
+--                 local pets = settings.Game.Player.Backpack.Pets
+--                 local target = nil
+--                 for i = #pets, 1, -1 do
+--                     local pet = pets[i]
+--                     if not isProtectedPet(pet, true, true)
+--                         and pet.level < config["Sell Pets"].Level
+--                         and not table.find({"Pterodactyl", "Raptor", "Triceratops", "Stegosaurus", "Brontosaurus", "T-Rex"}, pet.name) then
+--                         target = pet
+--                         break
+--                     end
+--                 end
 
-                if not target then return end
-                Task.priority("SubmitPet", function()
-                    Hum:EquipTool(target.tool)
-                    task.wait(0.5)
+--                 if not target then return end
+--                 Task.priority("SubmitPet", function()
+--                     Hum:EquipTool(target.tool)
+--                     task.wait(0.5)
 
-                    remote:FireServer("MachineInteract")
-                    task.wait(1)
-                end, {})
-            end
-        end)
-        if not success then
-            warn("[Task Error: Auto Dino Pet]", err)
-        end
-    end
-end)
+--                     remote:FireServer("MachineInteract")
+--                     task.wait(1)
+--                 end, {})
+--             end
+--         end)
+--         if not success then
+--             warn("[Task Error: Auto Dino Pet]", err)
+--         end
+--     end
+-- end)
 
 -- -- Auto Pet Mutation
 task.spawn(function()
