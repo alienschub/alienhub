@@ -25,16 +25,17 @@ local PetListModule = require(game:GetService("ReplicatedStorage"):WaitForChild(
 local DataService = require(game:GetService("ReplicatedStorage").Modules.DataService)
 
 -- Remotes
-local petEggStockRemote = game:GetService("ReplicatedStorage"):WaitForChild("GameEvents").BuyPetEgg
-local buyGearStockRemote = game:GetService("ReplicatedStorage"):WaitForChild("GameEvents").BuyGearStock
-local buySeedStockRemote =  game:GetService("ReplicatedStorage"):WaitForChild("GameEvents").BuySeedStock
-local buyEventShopStockRemote =  game:GetService("ReplicatedStorage"):WaitForChild("GameEvents").BuyEventShopStock
-local petEggServiceRemote = game:GetService("ReplicatedStorage"):WaitForChild("GameEvents").PetEggService
-local petBoostServiceRemote = game:GetService("ReplicatedStorage"):WaitForChild("GameEvents").PetBoostService
-local sellPetRemote = game:GetService("ReplicatedStorage"):WaitForChild("GameEvents").SellPet_RE
-local petGiftingServiceRemote = game:GetService("ReplicatedStorage"):WaitForChild("GameEvents").PetGiftingService
-local petMutationMachineServiceRemote = game:GetService("ReplicatedStorage"):WaitForChild("GameEvents").PetMutationMachineService_RE
-local zenQuestRemoteEventRemote = game:GetService("ReplicatedStorage"):WaitForChild("GameEvents").ZenQuestRemoteEvent
+local GameEvents = game:GetService("ReplicatedStorage"):WaitForChild("GameEvents")
+local petEggStockRemote = GameEvents.BuyPetEgg
+local buyGearStockRemote = GameEvents.BuyGearStock
+local buySeedStockRemote =  GameEvents.BuySeedStock
+local buyEventShopStockRemote =  GameEvents.BuyEventShopStock
+local petEggServiceRemote = GameEvents.PetEggService
+local petBoostServiceRemote = GameEvents.PetBoostService
+local sellPetRemote = GameEvents.SellPet_RE
+local petGiftingServiceRemote = GameEvents.PetGiftingService
+local petMutationMachineServiceRemote = GameEvents.PetMutationMachineService_RE
+local zenQuestRemoteEventRemote = GameEvents.ZenQuestRemoteEvent
 
 -- Global Shared Variables
 local Players = game:GetService("Players")
