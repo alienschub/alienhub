@@ -125,6 +125,7 @@ local function cleanToolFrom(t)
 end
 
 local function isProtectedPet(pet, isKeep, isMutation)
+    print("inside protected")
     local name = pet.name
     local mutation = pet.mutation
 
@@ -550,34 +551,36 @@ end)
 -- end)
 
 -- Auto Sell Pet
--- task.spawn(function()
---     while task.wait(5) do
---         local success, err = pcall(function()
---             local farm = settings["Game"]["Farm"]["Self"]
---             if not farm then return end
+task.spawn(function()
+    while task.wait(5) do
+        local success, err = pcall(function()
+            local farm = settings["Game"]["Farm"]["Self"]
+            if not farm then return end
 
---             local remote = game:GetService("ReplicatedStorage"):WaitForChild("GameEvents"):WaitForChild("SellPet_RE")
---             local pets = settings.Game.Player.Backpack.Pets
+            local remote = game:GetService("ReplicatedStorage"):WaitForChild("GameEvents"):WaitForChild("SellPet_RE")
+            local pets = settings.Game.Player.Backpack.Pets
 
---             Task.normal("AutoSell", function()
---                 for i = #pets, 1, -1 do
---                     local pet = pets[i]
---                     warn("AutoSell PET LEVEL:", pet.level, "CONFIG LEVEL:", config["Sell Pets"] and config["Sell Pets"].Level)
---                     if not isProtectedPet(pet, true, true) and pet.level < config["Sell Pets"].Level then
---                         Hum:EquipTool(pet.tool)
---                         task.wait(0.5)
+            Task.normal("AutoSell", function()
+                for i = #pets, 1, -1 do
+                    local pet = pets[i]
+                    warn("AutoSell PET LEVEL:", pet.level, "CONFIG LEVEL:", config["Sell Pets"] and config["Sell Pets"].Level)
+                    if not isProtectedPet(pet, true, true) and pet.level < config["Sell Pets"].Level then
+                        Hum:EquipTool(pet.tool)
+                        print("equip")
+                        task.wait(2)
 
---                         remote:FireServer(workspace[Player.Name][pet.tool.Name])
---                         task.wait(1.5)
---                     end
---                 end
---             end, {})
---         end)
---         if not success then
---             warn("[Task Error: Auto Sell Pet]", err)
---         end
---     end
--- end)
+                        remote:FireServer(workspace[Player.Name][pet.tool.Name])
+                        task.wait(1.5)
+                        print("fire sell")
+                    end
+                end
+            end, {})
+        end)
+        if not success then
+            warn("[Task Error: Auto Sell Pet]", err)
+        end
+    end
+end)
 
 -- Trade Pet
 game:GetService("TextChatService").OnIncomingMessage = function(msg)
