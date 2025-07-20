@@ -22,6 +22,7 @@ Task.define("normal", "AutoHarvest", 46)
 
 -- Modules
 local PetListModule = require(game:GetService("ReplicatedStorage"):WaitForChild("Data").PetRegistry.PetList)
+local DataService = require(game:GetService("ReplicatedStorage").Modules.DataService)
 
 -- Global Shared Variables
 local Players = game:GetService("Players")
