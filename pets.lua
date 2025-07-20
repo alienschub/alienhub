@@ -125,15 +125,14 @@ local function cleanToolFrom(t)
 end
 
 local function isProtectedPet(pet, isKeep, isMutation)
-    print("inside protected")
     local name = pet.name
     local mutation = pet.mutation
 
     local keepConfig = config["Sell Pets"]["Keep"]
     local mutaList = keepConfig.Mutation[mutation]
 
-    local isKeptType = isKeep and table.find(keepConfig.Type, name)
-    local isKeptMutation = isMutation and mutation and mutaList and table.find(mutaList, name)
+    local isKeptType = isKeep and (table.find(keepConfig.Type, name) ~= nil)
+    local isKeptMutation = isMutation and mutation and mutaList and (table.find(mutaList, name) ~= nil)
     local isAscended = mutation == "n"
     local isOstrich = name == "Ostrich"
     -- local isUsedPet = table.find(settings["Game"]["Player"]["Data"].equipedPets, pet.uuid)
