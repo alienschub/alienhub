@@ -839,6 +839,9 @@ task.spawn(function()
 
             if (#tranquils > 0 and tLev < 5) or (#corrupts > 0 and coLev < 5) then
                 Task.normal("AutoHarvest", function()
+                    teleport(Vector3.new(-102.86, 2.99, -12.61))
+                    task.wait(1)
+                    
                     for _, fruit in ipairs(tranquils) do
                         if tLev >= 5 then break end
                         Hum:EquipTool(fruit.tool)
