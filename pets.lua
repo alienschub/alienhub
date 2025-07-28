@@ -19,6 +19,7 @@ Task.define("normal", "AutoFeed", 49)
 Task.define("normal", "ApplyBooster", 48)
 Task.define("normal", "AutoHatch", 47)
 Task.define("normal", "AutoHarvest", 46)
+Task.define("normal", "ZenGiver", 45)
 
 -- Modules
 local PetListModule = require(game:GetService("ReplicatedStorage"):WaitForChild("Data").PetRegistry.PetList)
@@ -56,6 +57,8 @@ local settings = {
         ["Player"] = {
             ["Backpack"] = {
                 ["Fruits"] = {},
+                ["Tranquils"] = {},
+                ["Corrupts"] = {},
                 ["Eggs"] = {},
                 ["Pets"] = {},
                 ["Booster"] = {}
@@ -72,6 +75,7 @@ local settings = {
                 gearStock = nil,
                 seedStock = nil,
                 eventShopStock = nil,
+                zenEventData = nil,
             }
         }
     }
@@ -124,9 +128,11 @@ local function isHungry(hunger, petType, hungerThreshold)
     return (hunger / maxHunger) < hungerThreshold
 end
 
-local function isAlreadyIn(list, uuid)
-    for _, v in ipairs(list) do
-        if v.uuid == uuid then return true end
+local function isAlreadyIn(lists, uuid)
+    for _, list in ipairs(lists) do
+        for _, v in ipairs(list) do
+            if v.uuid == uuid then return true end
+        end
     end
     return false
 end
@@ -152,10 +158,11 @@ local function isProtectedPet(pet, isKeep, isMutation)
     local isAscended = mutation == "n"
     local isMega = mutation == "i"
     local isTranquil = mutation == "o"
+    local isCorrupted = mutation == "p"
     local isOstrich = name == "Ostrich"
     -- local isUsedPet = table.find(settings["Game"]["Player"]["Data"].equipedPets, pet.uuid)
 
-    return isKeptType or isKeptMutation or isAscended or isOstrich or isMega or isTranquil
+    return isKeptType or isKeptMutation or isAscended or isOstrich or isMega or isTranquil or isCorrupted
 end
 
 -- Init
@@ -224,12 +231,13 @@ task.spawn(function()
 
             -- Auto Buy Tools
             if data.gearStock and data.gearStock.Stocks then
-                for _, itemName in ipairs({ "Levelup Lollipop", "Medium Toy", "Medium Treat", "Basic Sprinkler", "Advanced Sprinkler", "Godly Sprinkler", "Master Sprinkler" }) do
-                    local info = data.gearStock.Stocks[itemName]
-                    if info and info.Stock > 0 then
-                        for i = 1, info.Stock do
-                            buyGearStockRemote:FireServer(itemName)
-                            task.wait()
+                for itemName, info in pairs(data.gearStock.Stocks) do
+                    if table.find({ "Levelup Lollipop", "Medium Toy", "Medium Treat", "Basic Sprinkler", "Advanced Sprinkler", "Godly Sprinkler", "Master Sprinkler" }, itemName) then
+                        if info and info.Stock > 0 then
+                            for i = 1, info.Stock do
+                                buyGearStockRemote:FireServer(itemName)
+                                task.wait()
+                            end
                         end
                     end
                 end
@@ -268,7 +276,6 @@ task.spawn(function()
     end
 end)
 
-
 -- Backpack
 task.spawn(function()
     while task.wait(1) do
@@ -288,6 +295,7 @@ task.spawn(function()
                 settings["Game"]["Player"]["Data"].gearStock = data.GearStock
                 settings["Game"]["Player"]["Data"].seedStock = data.SeedStock
                 settings["Game"]["Player"]["Data"].eventShopStock = data.EventShopStock
+                settings["Game"]["Player"]["Data"].zenEventData = data.ZenEventData
             end)
 
             if not success then
@@ -300,6 +308,8 @@ task.spawn(function()
             backpack.Eggs = {}
             backpack.Booster = { xp = {}, passive = {}, unknow = {}}
             local fruits = backpack.Fruits
+            local tranquils = backpack.Tranquils
+            local corrupts = backpack.Corrupts
             for uuid, item in pairs(data.InventoryData) do
                 local type = item.ItemType
                 local data = item.ItemData
@@ -313,14 +323,31 @@ task.spawn(function()
                         amount = data.Uses
                     })
                 elseif type == "Holdable" then
-                    if not isAlreadyIn(fruits, uuid) then
-                        table.insert(fruits, {
-                            tool = tool,
-                            uuid = uuid,
-                            name = data.ItemName,
-                            favorite = data.IsFavorite
-                        })
+                    if not isAlreadyIn({fruits, tranquils, corrupts}, uuid) then
+                        if string.find(data.MutationString, "Tranquil") then
+                            table.insert(tranquils, {
+                                tool = tool,
+                                uuid = uuid,
+                                name = data.ItemName,
+                                favorite = data.IsFavorite
+                            })
+                        elseif string.find(data.MutationString, "Corrupt") then
+                            table.insert(corrupts, {
+                                tool = tool,
+                                uuid = uuid,
+                                name = data.ItemName,
+                                favorite = data.IsFavorite
+                            })
+                        else
+                            table.insert(fruits, {
+                                tool = tool,
+                                uuid = uuid,
+                                name = data.ItemName,
+                                favorite = data.IsFavorite
+                            })
+                        end
                     end
+
                 elseif type == "PetBoost" then
                     local boost = data.PetBoostType == "PET_XP_BOOST" and "xp"
                         or data.PetBoostType == "PASSIVE_BOOST" and "passive"
@@ -340,7 +367,7 @@ task.spawn(function()
                 local tool = getItemById(uuid)
 
                 if type then
-                    if not isAlreadyIn(pets, uuid) then
+                    if not isAlreadyIn({pets}, uuid) then
                         table.insert(pets, {
                             tool = tool,
                             uuid = uuid,
@@ -353,6 +380,8 @@ task.spawn(function()
             end
 
             cleanToolFrom(backpack.Fruits)
+            cleanToolFrom(backpack.Tranquils)
+            cleanToolFrom(backpack.Corrupts)
             cleanToolFrom(backpack.Pets)
         end)
         if not success then
@@ -739,37 +768,99 @@ task.spawn(function()
 end)
 
 -- Auto Tranquil
+-- task.spawn(function()
+--     while task.wait(5) do
+--         local success, err = pcall(function()
+--             zenQuestRemoteEventRemote:FireServer("SubmitAllPlants")
+            
+--             local farm = settings["Game"]["Farm"]["Self"]
+--             local fruits = {}
+--             for _, plant in ipairs(farm.Important.Plants_Physical:GetChildren()) do
+--                 for _, fruit in ipairs(plant.Fruits:GetChildren()) do
+--                     if fruit:GetAttribute("Tranquil") then
+--                         local prompt = fruit:FindFirstChildWhichIsA("ProximityPrompt", true)
+--                         if prompt and prompt.Enabled then
+--                             table.insert(fruits, {pos = fruit:GetPivot().Position, prompt = prompt})
+--                         end
+--                     end
+--                 end
+--             end
+
+--             if #fruits == 0 then return end
+--             Task.normal("AutoHarvest", function()
+--                 for _, fruit in ipairs(fruits) do
+--                     teleport(fruit.pos)
+--                     task.wait(0.05)
+--                     fireproximityprompt(fruit.prompt)
+--                     task.wait()
+--                 end
+--             end, {})
+--         end)
+--         if not success then
+--             warn("[Task Error: Auto Tranquil]", err)
+--         end
+--     end
+-- end)
+
+-- Auto Zen Event
 task.spawn(function()
     while task.wait(5) do
         local success, err = pcall(function()
-            zenQuestRemoteEventRemote:FireServer("SubmitAllPlants")
+            local zenEventData = settings["Game"]["Player"]["Data"].zenEventData
             
             local farm = settings["Game"]["Farm"]["Self"]
             local fruits = {}
             for _, plant in ipairs(farm.Important.Plants_Physical:GetChildren()) do
                 for _, fruit in ipairs(plant.Fruits:GetChildren()) do
-                    if fruit:GetAttribute("Tranquil") then
+                    if fruit:GetAttribute("Tranquil") or fruit:GetAttribute("Corrupt") then
                         local prompt = fruit:FindFirstChildWhichIsA("ProximityPrompt", true)
                         if prompt and prompt.Enabled then
-                            fireproximityprompt(prompt)
                             table.insert(fruits, {pos = fruit:GetPivot().Position, prompt = prompt})
                         end
                     end
                 end
             end
 
-            if #fruits == 0 then return end
-            Task.normal("AutoHarvest", function()
-                for _, fruit in ipairs(fruits) do
-                    teleport(fruit.pos)
-                    task.wait(0.05)
-                    fireproximityprompt(fruit.prompt)
-                    task.wait()
-                end
-            end, {})
+            if #fruits > 0 then
+                Task.normal("AutoHarvest", function()
+                    for _, fruit in ipairs(fruits) do
+                        teleport(fruit.pos)
+                        task.wait(0.05)
+                        fireproximityprompt(fruit.prompt)
+                        task.wait()
+                    end
+                end, {})
+            end
+
+            local tranquils = settings["Game"]["Player"]["Backpack"].Tranquils
+            local tLev = zenEventData.TranquilLevel
+            local corrupts = settings["Game"]["Player"]["Backpack"].Corrupts
+            local coLev = zenEventData.CorruptionLevel
+
+            if (#tranquils > 0 and tLev < 5) or (#corrupts > 0 and coLev < 5) then
+                Task.normal("AutoHarvest", function()
+                    for _, fruit in ipairs(tranquils) do
+                        if tLev >= 5 then break end
+                        Hum:EquipTool(fruit.tool)
+                        task.wait(1)
+                        zenQuestRemoteEventRemote:FireServer("SubmitToFox")
+                        task.wait(0.5)
+                        tLev = tLev + 1
+                    end
+
+                    for _, fruit in ipairs(corrupts) do
+                        if coLev >= 5 then break end
+                        Hum:EquipTool(fruit.tool)
+                        task.wait(1)
+                        zenQuestRemoteEventRemote:FireServer("SubmitToFox")
+                        task.wait(0.5)
+                        coLev = coLev + 1
+                    end
+                end, {})
+            end
         end)
         if not success then
-            warn("[Task Error: Auto Tranquil]", err)
+            warn("[Task Error: Auto Zen Event]", err)
         end
     end
 end)
