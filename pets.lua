@@ -727,7 +727,7 @@ task.spawn(function()
                 local target = nil
                 for i = #pets, 1, -1 do
                     local pet = pets[i]
-                    if pet.level >= 50 and pet.level < 75 and not isProtectedPet(pet, false, true) then
+                    if pet.level >= 50 and pet.level < 60 and not isProtectedPet(pet, false, true) then
                         target = pet
                         break
                     end
@@ -841,7 +841,7 @@ task.spawn(function()
                 Task.normal("AutoHarvest", function()
                     teleport(Vector3.new(-102.86, 2.99, -12.61))
                     task.wait(1)
-                    
+
                     for _, fruit in ipairs(tranquils) do
                         if tLev >= 5 then break end
                         Hum:EquipTool(fruit.tool)
